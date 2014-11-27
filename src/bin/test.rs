@@ -17,6 +17,7 @@ struct Options {
     flag_package: Option<String>,
     flag_target: Option<String>,
     flag_verbose: bool,
+    flag_release: bool,
 }
 
 pub const USAGE: &'static str = "
@@ -36,6 +37,7 @@ Options:
     --target TRIPLE          Build for the target triple
     --manifest-path PATH     Path to the manifest to build tests for
     -v, --verbose            Use verbose output
+    --release                Build artifacts in release mode, with optimizations
 
 All of the trailing arguments are passed to the test binaries generated for
 filtering tests and generally providing options configuring how they run. For
@@ -53,11 +55,17 @@ pub fn execute(options: Options, shell: &mut MultiShell) -> CliResult<Option<()>
     let root = try!(find_root_manifest_for_cwd(options.flag_manifest_path));
     shell.set_verbose(options.flag_verbose);
 
+    let env = if options.flag_release {
+        "release"
+    } else {
+        "test"
+    };
+
     let mut ops = ops::TestOptions {
         name: options.flag_test.as_ref().map(|s| s.as_slice()),
         no_run: options.flag_no_run,
         compile_opts: ops::CompileOptions {
-            env: "test",
+            env: env,
             shell: shell,
             jobs: options.flag_jobs,
             target: options.flag_target.as_ref().map(|s| s.as_slice()),
